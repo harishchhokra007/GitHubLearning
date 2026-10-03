@@ -1,0 +1,281 @@
+# Enterprise Knowledge Operations Agent
+
+A multi-agent AI system for complex enterprise knowledge retrieval and reasoning across documents.
+
+## 🎯 Project Overview
+
+The Enterprise Knowledge Operations Agent demonstrates advanced agentic AI patterns by implementing a coordinated system of specialized agents that:
+
+- **Decompose** complex queries into logical subtasks
+- **Retrieve** relevant documents using semantic search
+- **Reason** across multiple sources for synthesis
+- **Validate** responses for grounding and hallucination control
+- **Track** execution for full observability
+- **Evaluate** quality with multiple metrics
+
+## 🏗️ System Architecture
+
+The system consists of 5 specialized agents:
+
+1. **Orchestrator Agent** - Plans query execution and routes tasks
+2. **Retriever Agent** - Performs semantic search with relevance ranking
+3. **Analyzer Agent** - Synthesizes answers from retrieved documents
+4. **Verifier Agent** - Validates grounding and applies guardrails
+5. **Memory Agent** - Manages context and conversation history
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams and component descriptions.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- pip
+
+### Installation
+
+1. Clone/navigate to the project:
+```bash
+cd C:\repos\ai-engineering-lead
+```
+
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/Scripts/activate  # On Windows
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Create `.env` file (optional, for OpenAI API):
+```bash
+OPENAI_API_KEY=your_key_here
+```
+
+### Running the Application
+
+**Interactive Mode**:
+```bash
+python main.py
+```
+
+**Demo Mode** (with sample queries):
+```bash
+python main.py --demo
+```
+
+## 📚 Usage Examples
+
+```python
+import asyncio
+from core.document_manager import DocumentManager
+from core.orchestration import EnterpriseKnowledgeAgent
+
+async def main():
+    # Initialize
+    doc_manager = DocumentManager()
+    agent = EnterpriseKnowledgeAgent(doc_manager)
+    
+    # Ingest documents
+    agent.ingest_text("Company policy text...", "Policy Document")
+    
+    # Process query
+    response = await agent.process_query("What is our data protection policy?")
+    
+    # Display results
+    print(agent.format_response(response))
+
+asyncio.run(main())
+```
+
+## 📊 Key Features
+
+### Multi-Agent Architecture
+- Clear role separation (Orchestrator, Retriever, Analyzer, Verifier, Memory)
+- Asynchronous agent execution
+- Explicit task routing and orchestration
+
+### Advanced Retrieval (RAG)
+- Semantic document search with Chroma vector database
+- Relevance-based result filtering
+- Metadata preservation for source attribution
+- Configurable chunking and overlap
+
+### Reasoning & Synthesis
+- Cross-document information synthesis
+- Explicit reasoning step generation
+- Source linking and citation
+
+### Validation & Guardrails
+- Grounding verification (is answer supported by sources?)
+- Hallucination detection
+- Confidence scoring
+- Warning generation for low-confidence responses
+
+### Evaluation & Observability
+- Comprehensive evaluation metrics
+- Execution trace logging
+- Agent decision recording
+- Failure detection and flagging
+- JSON evaluation reports
+
+## 🔧 Configuration
+
+Edit `config/settings.py` to customize:
+
+```python
+CHUNK_SIZE = 1000              # Document chunk size
+TOP_K_RETRIEVAL = 5            # Number of docs to retrieve
+GROUNDING_THRESHOLD = 0.7      # Min grounding score
+HALLUCINATION_THRESHOLD = 0.5  # Hallucination detection
+```
+
+## 📈 Evaluation Metrics
+
+The system tracks:
+
+- **Retrieval Relevance**: Quality of document retrieval (0-1)
+- **Grounding Score**: How well answer is supported by sources (0-1)
+- **Hallucination Detection**: Flags potential unsupported claims
+- **Failure Detection**: Identifies retrieval, grounding, or processing failures
+- **Execution Traces**: Complete agent decision logging
+- **Confidence Level**: low/medium/high assessment
+
+### Sample Evaluation Output
+
+```json
+{
+  "response_id": "abc123",
+  "metrics": {
+    "retrieval_relevance": 0.85,
+    "grounding_score": 0.82,
+    "hallucination_detected": false,
+    "failure_flags": [],
+    "confidence_level": "high"
+  }
+}
+```
+
+## 📁 Project Structure
+
+```
+ai-engineering-lead/
+├── agents/                 # Agent implementations
+│   ├── base_agent.py      # Base agent class
+│   ├── orchestrator_agent.py
+│   ├── retriever_agent.py
+│   ├── analyzer_agent.py
+│   ├── verifier_agent.py
+│   └── memory_agent.py
+├── core/                  # Core system components
+│   ├── types.py          # Data structures
+│   ├── document_manager.py # Document & vector DB
+│   └── orchestration.py    # Main orchestration
+├── evaluation/           # Evaluation system
+│   └── evaluation_system.py
+├── config/              # Configuration
+│   └── settings.py
+├── data/                # Data storage
+│   ├── documents/
+│   └── vector_store/
+├── logs/                # Application logs
+├── docs/                # Documentation
+├── tests/               # Unit tests
+├── main.py             # Application entry point
+├── requirements.txt     # Dependencies
+└── README.md           # This file
+```
+
+## 🧪 Testing
+
+Run unit tests:
+```bash
+pytest tests/
+```
+
+Run specific test:
+```bash
+pytest tests/test_agents.py -v
+```
+
+## 🔐 Security & Guardrails
+
+- Input validation on queries
+- Source attribution requirement
+- Hallucination control with thresholds
+- Grounding verification
+- Confidence-based warnings
+- Clear uncertainty handling
+
+## 📝 Logging & Debugging
+
+Logs are saved to `logs/app.log` and console output.
+
+Set log level in `config/settings.py`:
+```python
+LOG_LEVEL = "DEBUG"  # or INFO, WARNING, ERROR
+```
+
+View evaluation reports:
+```bash
+cat evaluation/eval_*.json
+```
+
+## 🤝 Contributing
+
+Areas for enhancement:
+1. Add more sophisticated reasoning models
+2. Implement actual LLM integration (GPT-4, etc.)
+3. Add multi-language support
+4. Extend evaluation metrics
+5. Build UI frontend (Streamlit/Chainlit)
+
+## 📚 Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - Detailed system architecture
+- [Agent Guide](docs/AGENT_GUIDE.md) - Agent-specific documentation
+- [API Reference](docs/API_REFERENCE.md) - API documentation
+- [Evaluation Guide](docs/EVALUATION_GUIDE.md) - Evaluation metrics and methods
+
+## 📄 License
+
+[Your License Here]
+
+## 👥 Authors
+
+Created as an enterprise knowledge operations AI system demonstration.
+
+## ❓ FAQ
+
+**Q: How do I add more documents?**
+A: Use `agent.ingest_text()` or `agent.ingest_document()` methods.
+
+**Q: Can I customize agent behavior?**
+A: Yes, each agent class can be subclassed to override behavior.
+
+**Q: How accurate is the system?**
+A: Accuracy depends on document quality and query specificity. See evaluation metrics.
+
+**Q: Can this scale to production?**
+A: The current implementation is for learning. Production would require:
+- Cloud deployment (AWS, Azure, GCP)
+- Larger vector database (Pinecone, Weaviate)
+- Production LLM endpoints
+- Enhanced security and authentication
+
+## 🚀 Next Steps
+
+1. Run `python main.py --demo` to see the system in action
+2. Review `docs/ARCHITECTURE.md` for detailed design
+3. Explore agent implementations in `agents/`
+4. Check evaluation reports in `evaluation/` directory
+5. Customize configuration in `config/settings.py`
+
+---
+
+**Status**: MVP Complete ✅
+**Version**: 1.0
+**Last Updated**: October 2026
