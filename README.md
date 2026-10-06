@@ -14,19 +14,45 @@ The Enterprise Knowledge Operations Agent demonstrates advanced agentic AI patte
 - **Track** execution with full observability (execution traces)
 - **Evaluate** quality with comprehensive metrics
 
-## 🏗️ System Architecture - LangGraph-Based
+## 🏗️ System Architecture - LangGraph with Gemini API
 
 The system uses **LangGraph StateGraph** with 6 specialized nodes:
 
 ```
-START → Router → Orchestrator → Retriever → Analyzer → Verifier → Memory → END
+START → Router → Orchestrator → Retriever → Analyzer(Gemini API) → Verifier → Memory → END
+                                                         ↓
+                                          [Google Gemini API Call]
+                                          (Free tier, no key needed)
+```
+
+### Complete Flow with Gemini API
+
+```
+User Query
+    ↓
+[Router Node] - Classify query
+    ↓
+[Orchestrator] - Decompose into subtasks
+    ↓
+[Retriever] - Semantic search (Chroma)
+    ↓
+[Analyzer] - Calls Google Gemini API ← KEY STEP
+    ├─ Sends documents to Gemini
+    ├─ Gemini generates intelligent answer
+    ├─ Returns synthesized response
+    ↓
+[Verifier] - Validates grounding
+    ↓
+[Memory] - Stores conversation
+    ↓
+Response to User
 ```
 
 ### Agents
 
 1. **Orchestrator Agent** - Query decomposition and subtask planning
 2. **Retriever Agent** - Semantic document search (Chroma vector DB)
-3. **Analyzer Agent** - Cross-document synthesis and reasoning
+3. **Analyzer Agent** - LLM-powered synthesis using **Google Gemini API** ⭐
 4. **Verifier Agent** - Grounding verification and hallucination detection
 5. **Memory Agent** - Conversation context management
 6. **Router Node** - Query routing and state initialization

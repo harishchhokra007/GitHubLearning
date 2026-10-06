@@ -4,9 +4,9 @@
 
 The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI system built with **LangGraph**, designed to answer complex enterprise questions by reasoning across multiple documents. It implements state graph-based agent orchestration for reliability and observability.
 
-## System Architecture - LangGraph Framework
+## System Architecture - LangGraph Framework with Gemini API
 
-### LangGraph State Graph
+### LangGraph State Graph with Gemini Integration
 
 ```
                    ┌─────────────────────────┐
@@ -30,6 +30,7 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
                        ┌──────▼──────┐      │
                        │  Analyzer   │◄─────┘
                        │   Node      │
+                       │  (w/ Gemini)│  ← Calls Google Gemini API
                        └──────┬──────┘
                               │
                        ┌──────▼──────┐
@@ -56,7 +57,7 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
 
 ## Component Description
 
-### Architecture Layers
+### Architecture Layers with External Services
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -76,9 +77,11 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
 │  ├─ Retriever Node                         │   │
 │  │ ├─ Semantic search each subtask         │   │
 │  │ └─ Rank by relevance                    │   │
-│  ├─ Analyzer Node                          │   │
-│  │ ├─ Synthesize across documents          │   │
-│  │ └─ Generate reasoning steps             │   │
+│  ├─ Analyzer Node (LLM Integration)        │   │
+│  │ ├─ Format prompt with documents         │   │
+│  │ ├─ CALL GOOGLE GEMINI API                │   │ ← External Service
+│  │ ├─ Generate intelligent answer          │   │
+│  │ └─ Fallback to templates if unavailable │   │
 │  ├─ Verifier Node                          │   │
 │  │ ├─ Calculate grounding score            │   │
 │  │ └─ Detect hallucinations                │   │
@@ -87,37 +90,49 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
 │     └─ Track context                       │   │
 └──────────────────┬───────────────────────────────┘
                   │
-┌──────────────────▼───────────────────────────────┐
-│  Agent Infrastructure Layer                      │
-│  ├─ BaseAgent (base_agent.py)                   │
-│  ├─ Status tracking                            │
-│  ├─ Logging & execution traces                 │
-│  └─ Error handling                             │
-└──────────────────┬───────────────────────────────┘
-                  │
-┌──────────────────▼───────────────────────────────┐
-│  Data Layer                                      │
-│  ├─ DocumentManager (document_manager.py)       │
-│  │  ├─ Document ingestion                      │
-│  │  ├─ Text chunking                           │
-│  │  └─ Vector storage/retrieval                │
-│  ├─ Types (types.py)                           │
-│  │  ├─ Document, DocumentChunk                 │
-│  │  ├─ RetrievalResult                         │
-│  │  ├─ AnalysisResult, VerificationResult      │
-│  │  └─ AgentMessage, AgentState                │
-│  └─ Configuration (settings.py)                │
-│     ├─ Thresholds, paths                       │
-│     └─ Embeddings model config                 │
-└──────────────────┬───────────────────────────────┘
-                  │
-┌──────────────────▼───────────────────────────────┐
-│  Vector Database Layer                           │
-│  ├─ Chroma (PersistentClient)                   │
-│  ├─ Embeddings: all-MiniLM-L6-v2 (384-dim)      │
-│  ├─ Search index: HNSW algorithm                │
-│  └─ Storage: data/vector_store/                 │
-└──────────────────────────────────────────────────┘
+                  └────────────┐
+                               │
+        ┌───────────────────────┼───────────────────────┐
+        │                       │                       │
+┌───────▼──────────┐   ┌────────▼────────┐   ┌─────────▼──────┐
+│ Agent Infrastructure   │ External Services    │ Vector Database │
+│ Layer                  │ (External APIs)      │ Layer           │
+│ ├─ BaseAgent           │ ┌──────────────┐     │ ├─ Chroma       │
+│ ├─ Status tracking     │ │ Google       │     │ ├─ Embeddings   │
+│ ├─ Logging & traces    │ │ Gemini API   │     │ ├─ HNSW search  │
+│ └─ Error handling      │ │              │     │ └─ Persistence  │
+│                        │ │ gemini-pro   │     │                 │
+│                        │ └──────────────┘     │                 │
+│                        │                      │                 │
+│                        │ Cost: FREE           │                 │
+│                        │ Requests/min: 60     │                 │
+│                        │ Daily: Unlimited     │                 │
+│                        │                      │                 │
+│                        │ Fallback: Template   │                 │
+│                        │ synthesis (no API)   │                 │
+│                        └──────────────────────┘                 │
+└────────────────────────────────────────────────────────────────┘
+                  │                        │
+┌──────────────────▼────────────────────────▼──────────────────┐
+│  Data Layer & Configuration                                  │
+│  ├─ DocumentManager (document_manager.py)                   │
+│  │  ├─ Document ingestion                                  │
+│  │  ├─ Text chunking                                       │
+│  │  └─ Vector storage/retrieval                            │
+│  ├─ Types (types.py)                                        │
+│  │  ├─ Document, DocumentChunk                             │
+│  │  ├─ RetrievalResult                                     │
+│  │  ├─ AnalysisResult, VerificationResult                  │
+│  │  └─ AgentMessage, AgentState                            │
+│  └─ Configuration (settings.py)                             │
+│     ├─ Thresholds, paths                                   │
+│     ├─ Embeddings model config                             │
+│     └─ Gemini LLM configuration                            │
+│        ├─ GEMINI_MODEL = "gemini-pro"                       │
+│        ├─ GEMINI_TEMPERATURE = 0.7                          │
+│        ├─ GEMINI_MAX_TOKENS = 2048                          │
+│        └─ Requires: GOOGLE_API_KEY in .env                  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### 1. **Router Node** (LangGraph Entry Point)
@@ -201,52 +216,191 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
 
 ## Data Flow and Workflow
 
-### Query Processing Pipeline
+### Query Processing Pipeline with Gemini API
 
 ```
 1. USER QUERY
    │
    ▼
-2. ORCHESTRATOR AGENT
+2. ROUTER NODE (LangGraph)
+   - Classify query type
+   - Route to pipeline
+   │
+   ▼
+3. ORCHESTRATOR AGENT
    - Analyze query
+   - Decompose into subtasks
    - Create execution plan
-   - Route to retriever
    │
    ▼
-3. RETRIEVER AGENT
-   - Semantic search
+4. RETRIEVER AGENT
+   - Semantic search in Chroma
+   - Vector embedding matching
    - Rank by relevance
-   - Filter results
+   - Filter results (top-K)
    │
    ▼
-4. ANALYZER AGENT
-   - Cross-document reasoning
-   - Synthesize answer
-   - Extract sources
+5. ANALYZER AGENT - WITH GEMINI API
+   ├─ Format prompt with documents
+   ├─ Prepare system prompt for LLM
+   │
+   └─> [EXTERNAL: Google Gemini API Call]
+       │
+       └─ Request: gemini-pro model
+          Input: Query + Documents
+          Processing: Gemini LLM reasoning
+          Output: Intelligent answer
+       │
+       └─ Response received
+       └─ Parse and extract answer
+   │
+   ├─ Synthesize answer (if Gemini available)
+   │  OR fallback to templates
+   ├─ Extract reasoning steps
+   ├─ Extract source references
    │
    ▼
-5. VERIFIER AGENT
-   - Check grounding
-   - Detect hallucinations
-   - Assign confidence
-   │
-   ▼
-6. EVALUATION SYSTEM
-   - Calculate metrics
-   - Log traces
-   - Save results
+6. VERIFIER AGENT
+   - Validate grounding score
+   - Detect potential hallucinations
+   - Assign confidence level
+   - Generate warnings if needed
    │
    ▼
 7. MEMORY AGENT
-   - Store response
-   - Update context
+   - Store conversation history
+   - Update session state
+   - Track execution traces
    │
    ▼
-8. SYSTEM RESPONSE
-   - Answer
-   - Sources
-   - Verification status
-   - Evaluation metrics
+8. RESPONSE TO USER
+   - Complete answer
+   - Source citations
+   - Grounding score & confidence
+   - Execution time metrics
+```
+
+**Gemini API Integration Details:**
+- **Location**: Analyzer Agent (_synthesize_answer method, lines 134-187)
+- **API Endpoint**: Google Generative AI (gemini-pro)
+- **Request Format**: HumanMessage with formatted prompt
+- **Response Format**: LLM text content
+- **Cost**: FREE (60 requests/min, unlimited daily)
+- **Fallback**: Template-based synthesis if API unavailable or no key set
+- **Error Handling**: Automatic fallback with logging
+
+## Gemini API Integration
+
+### How Gemini API is Called
+
+When a query is processed, the Analyzer Agent calls Google Gemini API as follows:
+
+```
+ANALYZER AGENT PROCESS:
+├─ Receive: Query + Retrieved Documents
+├─ Build Prompt:
+│  └─ System: "You are an expert knowledge assistant..."
+│  └─ User: "[Retrieved documents]\n\n[User query]"
+├─ Initialize Gemini LLM:
+│  ├─ Model: gemini-pro
+│  ├─ Temperature: 0.7
+│  ├─ Max tokens: 2048
+│  └─ API Key: From GOOGLE_API_KEY environment variable
+├─ CALL GEMINI API:
+│  ├─ Send: Formatted prompt
+│  ├─ Wait: LLM processing (1-2 seconds)
+│  └─ Receive: Generated answer text
+├─ Process Response:
+│  ├─ Extract answer content
+│  ├─ Parse reasoning
+│  └─ Identify sources
+├─ Return: AnalysisResult with:
+│  ├─ Synthesized answer (from Gemini)
+│  ├─ Reasoning steps
+│  └─ Source references
+└─ Fallback (if Gemini unavailable):
+   └─ Use template synthesis instead
+```
+
+### Gemini Prompt Format
+
+```
+System Prompt:
+"You are an expert knowledge assistant. Based on the following retrieved documents, 
+provide a comprehensive, well-reasoned answer to the user's query.
+
+Instructions:
+1. Provide a clear, comprehensive answer based on the documents
+2. Cite specific sources when referencing information
+3. Organize your response logically with key findings
+4. Be concise but thorough
+5. If information is not in the documents, say so clearly"
+
+User Prompt:
+"USER QUERY: {user_query}
+
+RETRIEVED DOCUMENTS:
+{document1}
+---
+{document2}
+---
+{document3}
+
+ANSWER:"
+```
+
+### Configuration
+
+**File**: `config/settings.py`
+
+```python
+# Gemini LLM Configuration
+GEMINI_ENABLED = True
+GEMINI_MODEL = "gemini-pro"
+GEMINI_TEMPERATURE = 0.7      # Balanced reasoning (0.0=factual, 1.0=creative)
+GEMINI_MAX_TOKENS = 2048      # Maximum response length
+```
+
+**Environment Variables** (`.env` file):
+
+```
+GOOGLE_API_KEY=your-free-gemini-api-key
+```
+
+### Dependencies
+
+```
+langchain-google-genai>=0.1.0
+google-generativeai>=0.3.0
+```
+
+### API Pricing
+
+- **Cost**: Completely FREE
+- **Requests/minute**: 60 (generous for single user)
+- **Daily limit**: Unlimited
+- **No credit card**: Required to start
+
+### Fallback Mechanism
+
+If Gemini is unavailable:
+
+1. API key not set (`GOOGLE_API_KEY` missing)
+2. Network error or API timeout
+3. Rate limit exceeded
+
+**System automatically falls back to template-based synthesis** (no API needed):
+
+```python
+def _synthesize_answer_template(self, query: str, retrieval_results: List[RetrievalResult]):
+   # Generates answer from templates (lower quality, but always works)
+   answer = f"""Based on the retrieved documents, here's the answer:
+   {combined_content}
+   """
+   return answer
+```
+
+This ensures the system never crashes due to missing LLM - it degrades gracefully.
 ```
 
 ## Core Data Structures
