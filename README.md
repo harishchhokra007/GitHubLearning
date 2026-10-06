@@ -34,8 +34,9 @@ START → Router → Orchestrator → Retriever → Analyzer → Verifier → Me
 ### Technology Stack
 
 - **Framework**: LangGraph (state graph-based agent orchestration)
+- **LLM**: Google Gemini API (free tier, no credit card needed!)
 - **Vector Database**: Chroma (semantic search, ONNX embeddings)
-- **LLM Framework**: LangChain
+- **LLM Framework**: LangChain with LangChain-Google integration
 - **Embeddings**: all-MiniLM-L6-v2 (384-dimensional vectors)
 - **Language**: Python 3.11+
 - **Testing**: pytest (25+ test cases, 90%+ coverage)
@@ -67,10 +68,13 @@ source venv/Scripts/activate  # On Windows
 pip install -r requirements.txt
 ```
 
-4. Create `.env` file (optional, for OpenAI API):
+4. Create `.env` file with your Google Gemini API key (FREE):
 ```bash
-OPENAI_API_KEY=your_key_here
+# Get your free key at https://ai.google.dev/
+GOOGLE_API_KEY=your_google_api_key_here
 ```
+
+**Don't have a key?** The system works without it (falls back to template-based synthesis), but Gemini makes answers much better!
 
 ### Running the Application
 
@@ -83,6 +87,32 @@ python main.py
 ```bash
 python main.py --demo
 ```
+
+## 🤖 Google Gemini Integration
+
+This system now uses **Google Gemini API** for intelligent answer synthesis. Gemini is:
+
+- ✅ **Free** - Generous free tier (60 req/min, unlimited daily)
+- ✅ **Fast** - ~1-2s inference time per query
+- ✅ **Smart** - Excellent reasoning and synthesis across documents
+- ✅ **Easy** - One-line API key setup, no credit card needed
+- ✅ **Reliable** - Fallback to template synthesis if unavailable
+
+**Get Started with Gemini:**
+```bash
+# 1. Get your free API key (30 seconds)
+# Visit: https://ai.google.dev/ → Click "Get API Key"
+
+# 2. Add to .env
+GOOGLE_API_KEY=your-key-here
+
+# 3. Run!
+python main.py
+
+# Your answers now powered by Gemini ✨
+```
+
+For detailed setup, see **[GEMINI_SETUP_GUIDE.md](GEMINI_SETUP_GUIDE.md)**
 
 ## 📚 Usage Examples
 

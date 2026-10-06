@@ -17,8 +17,14 @@ for dir_path in [DOCUMENTS_DIR, VECTOR_STORE_DIR, LOGS_DIR, EVAL_DIR]:
     dir_path.mkdir(parents=True, exist_ok=True)
 
 # Model Configuration
-DEFAULT_LLM_MODEL = "gpt-4"
+DEFAULT_LLM_MODEL = "gemini-pro"  # Google Gemini (free tier available)
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small"
+
+# Gemini LLM Configuration
+GEMINI_ENABLED = True  # Enable Gemini by default
+GEMINI_MODEL = "gemini-pro"  # Model to use
+GEMINI_TEMPERATURE = 0.7  # Creativity level (0.0-1.0)
+GEMINI_MAX_TOKENS = 2048  # Maximum response length
 
 # Vector Database Configuration
 VECTOR_DB_TYPE = "chroma"  # Using Chroma for local, lightweight vector storage

@@ -145,10 +145,29 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
 - **Updates State**: Adds retrieved_documents to AgentState
 - **Vector DB**: Chroma with ONNX embeddings
 - **Output**: List of RetrievalResult objects
+
+### 4. **Analyzer Node**
+**File**: `core/langgraph_framework.py` (Node in LangGraph)
+**Agent**: `agents/analyzer_agent.py` (Powered by Google Gemini)
+
+- **Responsibility**: Answer synthesis and reasoning across documents
+- **LLM Integration**: Google Gemini API (free tier)
+- **Updates State**: Adds analysis_result to AgentState
+- **Features**:
+  - Sends retrieved documents to Gemini for intelligent synthesis
+  - Automatically falls back to template synthesis if Gemini unavailable
+  - Extracts reasoning steps and source references
+  - Handles multi-document cross-referencing
+  
+- **Gemini Configuration**:
+  - Model: `gemini-pro`
+  - Temperature: 0.7 (balanced reasoning)
+  - Max tokens: 2048
+  - Free tier: 60 requests/min, unlimited daily
   
 - **Output**: AnalysisResult with synthesized answer and reasoning
 
-### 4. **Verifier Agent** (`agents/verifier_agent.py`)
+### 5. **Verifier Agent** (`agents/verifier_agent.py`)
 **Responsibility**: Validation, Grounding & Guardrails
 
 - **Role**: Ensures quality and trustworthiness
@@ -165,7 +184,7 @@ The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI s
   - Confidence Level: low/medium/high
   - Warning flags and validation notes
 
-### 5. **Memory Agent** (`agents/memory_agent.py`)
+### 6. **Memory Agent** (`agents/memory_agent.py`)
 **Responsibility**: Context Management & History
 
 - **Role**: Maintains conversation state and context

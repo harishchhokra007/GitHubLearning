@@ -171,7 +171,7 @@ async def run_interactive_loop(agent: EnterpriseKnowledgeAgent) -> None:
     
     while True:
         try:
-            query = input("\n❓ Enter your query: ").strip()
+            query = input("\n[?] Enter your query: ").strip()
             
             if query.lower() == 'exit':
                 logger.info("Exiting...")
@@ -199,7 +199,7 @@ async def run_interactive_loop(agent: EnterpriseKnowledgeAgent) -> None:
             break
         except Exception as e:
             logger.error(f"Error processing query: {e}")
-            print(f"\n❌ Error: {e}")
+            print(f"\n[!] Error: {e}")
 
 
 def run_demo():

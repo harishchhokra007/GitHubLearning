@@ -1,13 +1,21 @@
-"""Analyzer agent for reasoning and synthesis."""
+"""Analyzer agent for reasoning and synthesis using Google Gemini LLM."""
 
 import logging
 from typing import Any, Dict, List
+import os
 
 from agents.base_agent import BaseAgent
 from config.settings import AgentRole
 from core.types import AnalysisResult, RetrievalResult
 
 logger = logging.getLogger(__name__)
+
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    logger.warning("langchain_google_genai not available - will use template synthesis")
 
 
 class AnalyzerAgent(BaseAgent):
@@ -21,14 +29,34 @@ class AnalyzerAgent(BaseAgent):
     
     def __init__(self, llm=None, agent_id: str = "analyzer_1"):
         """
-        Initialize analyzer agent.
+        Initialize analyzer agent with Google Gemini LLM.
         
         Args:
-            llm: Language model for reasoning
+            llm: Language model for reasoning (uses Gemini if None)
             agent_id: Unique agent identifier
         """
         super().__init__(agent_id, AgentRole.ANALYZER)
-        self.llm = llm
+        
+        # Initialize Gemini LLM if not provided
+        if llm is None and GEMINI_AVAILABLE:
+            try:
+                gemini_key = os.getenv('GOOGLE_API_KEY')
+                if gemini_key:
+                    self.llm = ChatGoogleGenerativeAI(
+                        model="gemini-pro",
+                        google_api_key=gemini_key,
+                        temperature=0.7,
+                        max_output_tokens=2048
+                    )
+                    logger.info("Initialized Gemini LLM for analysis")
+                else:
+                    self.llm = None
+                    logger.warning("GOOGLE_API_KEY not set - template synthesis will be used")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini: {e} - using template synthesis")
+                self.llm = None
+        else:
+            self.llm = llm
         
     def set_llm(self, llm):
         """Set the LLM to use for analysis."""
@@ -118,7 +146,7 @@ class AnalyzerAgent(BaseAgent):
                                 retrieval_results: List[RetrievalResult],
                                 reasoning_steps: List[str]) -> str:
         """
-        Synthesize an answer from retrieved documents.
+        Synthesize an answer from retrieved documents using Gemini LLM.
         
         Args:
             query: User query
@@ -137,7 +165,52 @@ class AnalyzerAgent(BaseAgent):
             for r in retrieval_results
         ])
         
-        # Generate answer (simplified - would use LLM in production)
+        # Use Gemini LLM if available
+        if self.llm is not None:
+            try:
+                from langchain.schema import HumanMessage
+                
+                prompt = f"""You are an expert knowledge assistant. Based on the following retrieved documents, 
+provide a comprehensive, well-reasoned answer to the user's query.
+
+USER QUERY: {query}
+
+RETRIEVED DOCUMENTS:
+{combined_content}
+
+Instructions:
+1. Provide a clear, comprehensive answer based on the documents
+2. Cite specific sources when referencing information
+3. Organize your response logically with key findings
+4. Be concise but thorough
+5. If information is not in the documents, say so clearly
+
+ANSWER:"""
+                
+                response = self.llm.invoke([HumanMessage(content=prompt)])
+                answer = response.content
+                logger.info(f"Generated answer using Gemini LLM ({len(answer)} chars)")
+                return answer
+                
+            except Exception as e:
+                logger.warning(f"Gemini LLM invocation failed: {e} - falling back to template")
+                return self._synthesize_answer_template(query, retrieval_results)
+        else:
+            # Fallback to template synthesis
+            return self._synthesize_answer_template(query, retrieval_results)
+    
+    def _synthesize_answer_template(self, query: str, 
+                                   retrieval_results: List[RetrievalResult]) -> str:
+        """
+        Fallback template-based answer synthesis (when LLM unavailable).
+        
+        Args:
+            query: User query
+            retrieval_results: Retrieved documents
+            
+        Returns:
+            Synthesized answer
+        """
         answer = f"""Based on the retrieved documents, here's a comprehensive answer to your query:
 
 Query: {query}
