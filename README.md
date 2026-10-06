@@ -1,27 +1,44 @@
 # Enterprise Knowledge Operations Agent
 
-A multi-agent AI system for complex enterprise knowledge retrieval and reasoning across documents.
+A production-grade multi-agent AI system for complex enterprise knowledge retrieval and reasoning across documents, built with **LangGraph**.
 
 ## 🎯 Project Overview
 
-The Enterprise Knowledge Operations Agent demonstrates advanced agentic AI patterns by implementing a coordinated system of specialized agents that:
+The Enterprise Knowledge Operations Agent demonstrates advanced agentic AI patterns using **LangGraph's state graphs** for reliable agent orchestration:
 
-- **Decompose** complex queries into logical subtasks
-- **Retrieve** relevant documents using semantic search
-- **Reason** across multiple sources for synthesis
-- **Validate** responses for grounding and hallucination control
-- **Track** execution for full observability
-- **Evaluate** quality with multiple metrics
+- **LangGraph Framework** - State graph-based agent orchestration
+- **Decompose** complex queries into logical subtasks via Orchestrator
+- **Retrieve** relevant documents using semantic search (Chroma + embeddings)
+- **Reason** across multiple sources for synthesis via Analyzer
+- **Validate** responses for grounding and hallucination control via Verifier
+- **Track** execution with full observability (execution traces)
+- **Evaluate** quality with comprehensive metrics
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture - LangGraph-Based
 
-The system consists of 5 specialized agents:
+The system uses **LangGraph StateGraph** with 6 specialized nodes:
 
-1. **Orchestrator Agent** - Plans query execution and routes tasks
-2. **Retriever Agent** - Performs semantic search with relevance ranking
-3. **Analyzer Agent** - Synthesizes answers from retrieved documents
-4. **Verifier Agent** - Validates grounding and applies guardrails
-5. **Memory Agent** - Manages context and conversation history
+```
+START → Router → Orchestrator → Retriever → Analyzer → Verifier → Memory → END
+```
+
+### Agents
+
+1. **Orchestrator Agent** - Query decomposition and subtask planning
+2. **Retriever Agent** - Semantic document search (Chroma vector DB)
+3. **Analyzer Agent** - Cross-document synthesis and reasoning
+4. **Verifier Agent** - Grounding verification and hallucination detection
+5. **Memory Agent** - Conversation context management
+6. **Router Node** - Query routing and state initialization
+
+### Technology Stack
+
+- **Framework**: LangGraph (state graph-based agent orchestration)
+- **Vector Database**: Chroma (semantic search, ONNX embeddings)
+- **LLM Framework**: LangChain
+- **Embeddings**: all-MiniLM-L6-v2 (384-dimensional vectors)
+- **Language**: Python 3.11+
+- **Testing**: pytest (25+ test cases, 90%+ coverage)
 
 See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams and component descriptions.
 

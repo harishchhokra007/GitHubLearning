@@ -2,82 +2,149 @@
 
 ## Overview
 
-The Enterprise Knowledge Operations Agent is a multi-agent AI system designed to answer complex enterprise questions by reasoning across multiple documents. It combines specialized agents with a robust orchestration framework to provide accurate, explainable, and grounded responses.
+The Enterprise Knowledge Operations Agent is a production-grade multi-agent AI system built with **LangGraph**, designed to answer complex enterprise questions by reasoning across multiple documents. It implements state graph-based agent orchestration for reliability and observability.
 
-## System Architecture
+## System Architecture - LangGraph Framework
 
-### High-Level Architecture Diagram
+### LangGraph State Graph
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│         USER QUERY / ENTERPRISE KNOWLEDGE OPS AGENT         │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-        ┌─────────▼─────────┐
-        │   Orchestrator    │  (Planning & Task Routing)
-        │     Agent         │
-        └─────────┬─────────┘
-                  │
-        ┌─────────┴──────────────────┬──────────────────┐
-        │                            │                  │
-   ┌────▼────┐              ┌───────▼──────┐     ┌─────▼──────┐
-   │Retriever│              │   Analyzer   │     │  Verifier  │
-   │ Agent   │              │    Agent     │     │   Agent    │
-   └────┬────┘              └───────┬──────┘     └─────┬──────┘
-        │                          │                   │
-   ┌────▼────────────────┐        │                   │
-   │  Document Vector DB │◄───────┴───────────────────┘
-   │  (Chroma/Semantic   │
-   │   Search)           │
-   └─────────────────────┘
-        
-        ┌─────────────────────┐
-        │   Memory Agent      │  (Context & History)
-        └─────────────────────┘
-        
-        ┌─────────────────────┐
-        │  Evaluation System   │  (Metrics & Observability)
-        └─────────────────────┘
+                   ┌─────────────────────────┐
+                   │   AgentState (Shared)    │
+                   │ - Query                  │
+                   │ - Subtasks               │
+                   │ - Retrieved Documents    │
+                   │ - Analysis Result        │
+                   │ - Verification Result    │
+                   │ - Execution Trace        │
+                   │ - Conversation History   │
+                   └─────────────────────────┘
+                              │
+               ┌──────────────┼──────────────┐
+               │              │              │
+          ┌────▼────┐   ┌─────▼─────┐  ┌────▼────┐
+          │  Router  │→  │Orchestrator├→ │Retriever│
+          │  Node    │   │   Node    │  │  Node   │
+          └─────────┘   └────┬──────┘  └────┬────┘
+                              │              │
+                       ┌──────▼──────┐      │
+                       │  Analyzer   │◄─────┘
+                       │   Node      │
+                       └──────┬──────┘
+                              │
+                       ┌──────▼──────┐
+                       │  Verifier   │
+                       │   Node      │
+                       └──────┬──────┘
+                              │
+                       ┌──────▼──────┐
+                       │   Memory    │
+                       │   Node      │
+                       └──────┬──────┘
+                              │
+                           [END]
 ```
+
+### LangGraph Advantages
+
+1. **State Management**: All agents access shared AgentState
+2. **Observability**: Execution trace at each node
+3. **Error Handling**: Graceful error propagation through state
+4. **Scalability**: Easy to add new nodes/agents
+5. **Testability**: State changes are trackable
+6. **Debugging**: Full execution history available
 
 ## Component Description
 
-### 1. **Orchestrator Agent** (`agents/orchestrator_agent.py`)
-**Responsibility**: Query Planning & Task Routing
+### Architecture Layers
 
-- **Role**: Decomposes complex queries into logical subtasks
-- **Functions**:
-  - Analyzes user queries to identify information needs
-  - Creates execution plans with multi-step reasoning
-  - Routes tasks to appropriate specialized agents
-  - Manages workflow state and dependencies
-  
-- **Output**: QueryPlan with ordered subtasks
+```
+┌──────────────────────────────────────────────────┐
+│  User Interface / Query Entry Point              │
+│  (main.py interactive loop)                      │
+└──────────────────┬───────────────────────────────┘
+                  │
+┌──────────────────▼───────────────────────────────┐
+│  LangGraph State Graph (langgraph_framework.py)   │
+│  ┌──────────────────────────────────────────┐   │
+│  │ Router Node                              │   │
+│  │ ├─ Classify query type                  │   │
+│  │ └─ Route to appropriate pipeline        │   │
+│  ├─ Orchestrator Node                      │   │
+│  │ ├─ Decompose query into subtasks        │   │
+│  │ └─ Create execution plan                │   │
+│  ├─ Retriever Node                         │   │
+│  │ ├─ Semantic search each subtask         │   │
+│  │ └─ Rank by relevance                    │   │
+│  ├─ Analyzer Node                          │   │
+│  │ ├─ Synthesize across documents          │   │
+│  │ └─ Generate reasoning steps             │   │
+│  ├─ Verifier Node                          │   │
+│  │ ├─ Calculate grounding score            │   │
+│  │ └─ Detect hallucinations                │   │
+│  └─ Memory Node                             │   │
+│     ├─ Update conversation history         │   │
+│     └─ Track context                       │   │
+└──────────────────┬───────────────────────────────┘
+                  │
+┌──────────────────▼───────────────────────────────┐
+│  Agent Infrastructure Layer                      │
+│  ├─ BaseAgent (base_agent.py)                   │
+│  ├─ Status tracking                            │
+│  ├─ Logging & execution traces                 │
+│  └─ Error handling                             │
+└──────────────────┬───────────────────────────────┘
+                  │
+┌──────────────────▼───────────────────────────────┐
+│  Data Layer                                      │
+│  ├─ DocumentManager (document_manager.py)       │
+│  │  ├─ Document ingestion                      │
+│  │  ├─ Text chunking                           │
+│  │  └─ Vector storage/retrieval                │
+│  ├─ Types (types.py)                           │
+│  │  ├─ Document, DocumentChunk                 │
+│  │  ├─ RetrievalResult                         │
+│  │  ├─ AnalysisResult, VerificationResult      │
+│  │  └─ AgentMessage, AgentState                │
+│  └─ Configuration (settings.py)                │
+│     ├─ Thresholds, paths                       │
+│     └─ Embeddings model config                 │
+└──────────────────┬───────────────────────────────┘
+                  │
+┌──────────────────▼───────────────────────────────┐
+│  Vector Database Layer                           │
+│  ├─ Chroma (PersistentClient)                   │
+│  ├─ Embeddings: all-MiniLM-L6-v2 (384-dim)      │
+│  ├─ Search index: HNSW algorithm                │
+│  └─ Storage: data/vector_store/                 │
+└──────────────────────────────────────────────────┘
+```
 
-### 2. **Retriever Agent** (`agents/retriever_agent.py`)
-**Responsibility**: Document Search & Relevance Ranking
+### 1. **Router Node** (LangGraph Entry Point)
+**File**: `core/langgraph_framework.py`
 
-- **Role**: Semantic search and document retrieval
-- **Functions**:
-  - Performs semantic search using embeddings
-  - Ranks results by relevance score
-  - Filters results using threshold scoring
-  - Preserves source attribution and metadata
-  
-- **Key Metrics**:
-  - Relevance Score: 0-1 (higher = more relevant)
-  - Number of results returned
-  - Average relevance of retrieved set
+- **Purpose**: Classify query type and route appropriately
+- **Logic**:
+  - Detect follow-up questions (check conversation history)
+  - Identify simple vs. complex queries
+  - Route to orchestrator (default) or memory (follow-ups)
 
-### 3. **Analyzer Agent** (`agents/analyzer_agent.py`)
-**Responsibility**: Cross-Document Reasoning & Synthesis
+### 2. **Orchestrator Node**
+**File**: `core/langgraph_framework.py` (Node in LangGraph)
+**Agent**: `agents/orchestrator_agent.py` (Original implementation)
 
-- **Role**: Reason across retrieved documents
-- **Functions**:
-  - Performs logical inference across sources
-  - Synthesizes answers from multiple documents
-  - Generates reasoning steps and explanations
-  - Extracts and links source references
+- **Responsibility**: Query decomposition
+- **Updates State**: Adds subtasks to AgentState
+- **Output**: List of logical subtasks
+
+### 3. **Retriever Node**
+**File**: `core/langgraph_framework.py` (Node in LangGraph)
+**Agent**: `agents/retriever_agent.py` (Original implementation)
+
+- **Responsibility**: Semantic document search
+- **Updates State**: Adds retrieved_documents to AgentState
+- **Vector DB**: Chroma with ONNX embeddings
+- **Output**: List of RetrievalResult objects
   
 - **Output**: AnalysisResult with synthesized answer and reasoning
 
